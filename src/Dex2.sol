@@ -23,7 +23,43 @@ contract Dex is ERC20 {
     }
 
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount){
+        require((tokenXAmount>0 && tokenYAmount==0) || (tokenXAmount==0 && tokenYAmount>0));
         
+        uint X=_tokenX.balanceOf(address(this));
+        uint Y=_tokenY.balanceOf(address(this));
+
+        console.log("X,Y",X, Y);
+        require(X>0 && Y>0 , "no swap amount");
+
+
+        uint input_amount;
+        uint output_amount;
+        ERC20 input;
+        ERC20 output;
+
+
+        // swap 
+        // fee : 0.1%
+        if (tokenXAmount>0){ // want X token
+            input=_tokenX;
+            output=_tokenY;
+            input_amount=tokenXAmount;
+            output_amount=Y*(tokenXAmount*999/1000)/(X+(tokenXAmount*999/1000));
+            //console.log("amount:",amount);
+        }
+        else { // want Y token
+            input=_tokenY;
+            output=_tokenX;
+            input_amount=tokenYAmount;
+            output_amount=X*(tokenYAmount*999/1000)/(Y+(tokenYAmount*999/1000));
+        }
+
+        require(output_amount>=tokenMinimumOutputAmount,"");
+        
+        input.transferFrom(msg.sender, address(this), input_amount);
+        output.transfer(msg.sender, output_amount);        
+        
+        return output_amount;
     }
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint256 LPTokenAmount){
@@ -85,4 +121,6 @@ contract Dex is ERC20 {
         _mint(to, lpAmount);
         return true;
     }
+
+    // math function
 }
