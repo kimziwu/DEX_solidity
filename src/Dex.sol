@@ -52,7 +52,12 @@ contract Dex is ERC20 {
             output_amount=X*(tokenYAmount*999/1000)/(Y+(tokenYAmount*999/1000));
         }
 
+        require(output_amount>=tokenMinimumOutputAmount,"");
         
+        input.transferFrom(msg.sender, address(this), input_amount);
+        output.transfer(msg.sender, output_amount);        
+        
+        return output_amount;
     }
 
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint256 LPTokenAmount){
