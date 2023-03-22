@@ -39,11 +39,11 @@ tokenXAmount / tokenYAmount 중 하나는 무조건 0이어야 합니다. 수량
 
 import "forge-std/console.sol";
 import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "openzeppelin-contracts/contracts/utils/math/Math.sol";
 
 contract Dex is ERC20 {
     ERC20 _tokenX;
     ERC20 _tokenY;
-    uint _decimal;
     uint liquiditySum; //totalSupply()
     
     mapping(address=>uint) liquidityUser; 
@@ -51,14 +51,16 @@ contract Dex is ERC20 {
     constructor(address tokenX, address tokenY) ERC20("LPToken","LPT"){
         _tokenX=ERC20(tokenX);
         _tokenY=ERC20(tokenY);
-        _decimal=10**18;
     }
 
+    // 거래자가 한 유형의 토큰을 전송 및 수신 (0 값의 토큰을 수신)
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount){
         require((tokenXAmount>0 && tokenYAmount==0) || (tokenXAmount==0 && tokenYAmount>0));
         
-        uint X=_tokenX.balanceOf(address(this));
-        uint Y=_tokenY.balanceOf(address(this));
+        uint X;
+        uint Y;
+        (X,Y)=update();
+   
         require(X>0 && Y>0);
 
         uint input_amount;
@@ -73,7 +75,6 @@ contract Dex is ERC20 {
             output=_tokenY;
             input_amount=tokenXAmount;
             output_amount=Y*(tokenXAmount*999/1000)/(X+(tokenXAmount*999/1000));
-            
         }
         else { // swap X token
             input=_tokenY;
@@ -82,15 +83,16 @@ contract Dex is ERC20 {
             output_amount=X*(tokenYAmount*999/1000)/(Y+(tokenYAmount*999/1000));
         }
 
+        // revert
         require(output_amount>=tokenMinimumOutputAmount);
         
-        input.transferFrom(msg.sender, address(this), input_amount);
-        output.transfer(msg.sender, output_amount);        
+        input.transferFrom(msg.sender, address(this), input_amount); //전송
+        output.transfer(msg.sender, output_amount);                  //수신   
         
         return output_amount;
     }
 
-
+    
     function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint256 LPTokenAmount){
         require(tokenXAmount>0 && tokenYAmount>0);
         require(_tokenX.allowance(msg.sender, address(this))>=tokenXAmount,"ERC20: insufficient allowance");
@@ -99,13 +101,16 @@ contract Dex is ERC20 {
         require(_tokenY.balanceOf(msg.sender)>=tokenYAmount,"ERC20: transfer amount exceeds balance");
 
         uint lpToken; 
+        uint X;
+        uint Y;
+
         if (liquiditySum==0){
-            lpToken=tokenXAmount*tokenYAmount/_decimal;
+            lpToken=Math.sqrt(tokenXAmount*tokenYAmount); //initial token amount
         }
         else {
-            uint X=_tokenX.balanceOf(address(this));
-            uint Y=_tokenY.balanceOf(address(this));
+            (X,Y)=update();
             
+            // 기존 토큰에 대한 새 토큰의 비율로 계산
             uint liquidityX=liquiditySum*tokenXAmount/X;
             uint liquidityY=liquiditySum*tokenYAmount/Y;
             lpToken=(liquidityX<liquidityY)?liquidityX:liquidityY;
@@ -120,6 +125,8 @@ contract Dex is ERC20 {
         _tokenY.transferFrom(msg.sender, address(this), tokenYAmount);
         transfer(msg.sender, lpToken);
         
+        update();
+
         return lpToken;
     }
 
@@ -128,8 +135,11 @@ contract Dex is ERC20 {
         require(LPTokenAmount>0);
         require(liquidityUser[msg.sender]>=LPTokenAmount);
 
-        uint tokenXAmount=_tokenX.balanceOf(address(this));
-        uint tokenYAmount=_tokenY.balanceOf(address(this));
+        uint tokenXAmount;
+        uint tokenYAmount;
+        (tokenXAmount,tokenYAmount)=update();
+  
+        //소각된 토큰에 비례
         uint X=tokenXAmount*LPTokenAmount/liquiditySum;
         uint Y=tokenYAmount*LPTokenAmount/liquiditySum;
 
@@ -143,6 +153,8 @@ contract Dex is ERC20 {
         _tokenY.transfer(msg.sender, Y);
         _burn(msg.sender, LPTokenAmount);
 
+        update();
+        
         return (X,Y);
     }
 
@@ -150,5 +162,12 @@ contract Dex is ERC20 {
     function transfer(address to, uint256 lpAmount) override public returns (bool){
         _mint(to, lpAmount);
         return true;
+    }
+
+    function update() internal view returns (uint, uint){
+        uint tokenXAmount=_tokenX.balanceOf(address(this));
+        uint tokenYAmount=_tokenY.balanceOf(address(this));
+
+        return (tokenXAmount,tokenYAmount);
     }
 }
