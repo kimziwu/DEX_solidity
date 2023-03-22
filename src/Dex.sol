@@ -48,7 +48,7 @@ contract Dex is ERC20 {
     
     mapping(address=>uint) liquidityUser; 
 
-    constructor(address tokenX, address tokenY) ERC20("LPToken","LPT"){
+    constructor(address tokenX, address tokenY) ERC20("LPToken","LP"){
         _tokenX=ERC20(tokenX);
         _tokenY=ERC20(tokenY);
     }
@@ -154,7 +154,7 @@ contract Dex is ERC20 {
         _burn(msg.sender, LPTokenAmount);
 
         update();
-        
+
         return (X,Y);
     }
 
