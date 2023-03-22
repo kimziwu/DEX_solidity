@@ -12,10 +12,17 @@ Input 토큰과 Input 수량, 최소 Output 요구량을 받아서 Output 토큰
 최소 요구량에 미달할 경우 revert 해야함
 수수료는 0.1%
 
-ex: X->Y swap
-스왑되는 토큰 X 양을 계산 : tokenXAmout*999/1000
-    99.9%(0.1% 수수료)
+    K=XY, fee:0.1%
+    x=tokenXAmount, y=tokenYAmount
+    X=_tokenX.balanceOf, Y=_tokenY.balanceOf
 
+    ex) x->y swap
+    XY=K=(X+x)(Y-y)
+    XY-Xy+xY-xy=XY
+    y(-X-x)=-xY
+    y=xY/X+x
+    y=((x*999/1000)*Y)/(X+(x*999/1000))
+    
 - Add / Remove Liquidity
 ERC-20 기반 LP 토큰을 사용
 수수료 수입과 Pool에 기부된 금액을 제외하고는 더 많은 토큰을 회수할 수 있는 취약점이 없어야 함
@@ -52,7 +59,6 @@ contract Dex is ERC20 {
         
         uint X=_tokenX.balanceOf(address(this));
         uint Y=_tokenY.balanceOf(address(this));
-
         require(X>0 && Y>0);
 
         uint input_amount;
@@ -99,7 +105,7 @@ contract Dex is ERC20 {
         else {
             uint X=_tokenX.balanceOf(address(this));
             uint Y=_tokenY.balanceOf(address(this));
-
+            
             uint liquidityX=liquiditySum*tokenXAmount/X;
             uint liquidityY=liquiditySum*tokenYAmount/Y;
             lpToken=(liquidityX<liquidityY)?liquidityX:liquidityY;

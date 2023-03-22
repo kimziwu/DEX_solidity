@@ -24,8 +24,12 @@ contract DexTest is Test {
         tokenX = new CustomERC20("XXX");
         tokenY = new CustomERC20("YYY");
 
-        dex = new Dex(address(tokenX), address(tokenY));
+        console.log("tokenX ",address(tokenX));
+        console.log("tokenY ",address(tokenY));
+        
 
+        dex = new Dex(address(tokenX), address(tokenY));
+        console.log("dex ",address(dex));
         tokenX.approve(address(dex), type(uint).max);
         tokenY.approve(address(dex), type(uint).max);
     }
