@@ -36,7 +36,7 @@ import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
 contract Dex is ERC20 {
     ERC20 _tokenX;
     ERC20 _tokenY;
-    uint _demical;
+    uint _decimal;
     uint liquiditySum; //totalSupply()
     
     mapping(address=>uint) liquidityUser; 
@@ -44,7 +44,7 @@ contract Dex is ERC20 {
     constructor(address tokenX, address tokenY) ERC20("LPToken","LPT"){
         _tokenX=ERC20(tokenX);
         _tokenY=ERC20(tokenY);
-        _demical=10**18;
+        _decimal=10**18;
     }
 
     function swap(uint256 tokenXAmount, uint256 tokenYAmount, uint256 tokenMinimumOutputAmount) external returns (uint256 outputAmount){
@@ -94,7 +94,7 @@ contract Dex is ERC20 {
 
         uint lpToken; 
         if (liquiditySum==0){
-            lpToken=tokenXAmount*tokenYAmount/_demical;
+            lpToken=tokenXAmount*tokenYAmount/_decimal;
         }
         else {
             uint X=_tokenX.balanceOf(address(this));
