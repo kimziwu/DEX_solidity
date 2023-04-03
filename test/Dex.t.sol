@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
-import "openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
+import "../node_modules/@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/Dex.sol";
 
 contract CustomERC20 is ERC20 {
@@ -24,12 +24,8 @@ contract DexTest is Test {
         tokenX = new CustomERC20("XXX");
         tokenY = new CustomERC20("YYY");
 
-        console.log("tokenX ",address(tokenX));
-        console.log("tokenY ",address(tokenY));
-        
-
         dex = new Dex(address(tokenX), address(tokenY));
-        console.log("dex ",address(dex));
+
         tokenX.approve(address(dex), type(uint).max);
         tokenY.approve(address(dex), type(uint).max);
     }
@@ -38,10 +34,19 @@ contract DexTest is Test {
         uint firstLPReturn = dex.addLiquidity(1000 ether, 1000 ether, 0);
         emit log_named_uint("firstLPReturn", firstLPReturn);
 
-        uint secondLPReturn = dex.addLiquidity(1000 ether, 1000 ether, 0);
+        uint secondLPReturn = dex.addLiquidity(1000 ether, 3 ether, 0);
         emit log_named_uint("secondLPReturn", secondLPReturn);
 
-        assertEq(firstLPReturn, secondLPReturn, "AddLiquidity Error 1");
+        (uint tx, uint ty) = dex.removeLiquidity(secondLPReturn, 0, 0);
+        
+        emit log_named_uint("secondLPremove", tx);
+        emit log_named_uint("secondLPremove", ty);
+
+        assertEq(tx, 1000 ether);
+        assertEq(ty, 3 ether);
+        
+
+        //assertEq(firstLPReturn, secondLPReturn, "AddLiquidity Error 1");
     }
 
     function testAddLiquidity2() external {
@@ -107,6 +112,8 @@ contract DexTest is Test {
         emit log_named_uint("secondLPReturn", secondLPReturn);
 
         (uint tx, uint ty) = dex.removeLiquidity(secondLPReturn, 0, 0);
+        console.log(tx);
+        console.log(ty);
         assertEq(tx, 1000 ether * 2, "RemoveLiquiidty tx error");
         assertEq(ty, 1000 ether * 2, "RemoveLiquiidty tx error");
     }
