@@ -1,5 +1,4 @@
 
-/**
 CPMM (xy=k) 방식의 AMM을 사용하는 DEX를 구현
 
 - Swap
@@ -31,6 +30,3 @@ tokenXAmount / tokenYAmount 중 하나는 무조건 0이어야 합니다. 수량
 - function addLiquidity(uint256 tokenXAmount, uint256 tokenYAmount, uint256 minimumLPTokenAmount) external returns (uint256 LPTokenAmount);
 - function removeLiquidity(uint256 LPTokenAmount, uint256 minimumTokenXAmount, uint256 minimumTokenYAmount) external;
 - function transfer(address to, uint256 lpAmount) external returns (bool);
-*/
-
-
